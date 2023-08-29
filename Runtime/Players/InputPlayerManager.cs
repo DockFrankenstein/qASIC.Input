@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using qASIC.Input.Devices;
 using qASIC.Input.Map;
-using qASIC.Input.Update;
+using System.Linq;
 using UnityEngine;
 
 namespace qASIC.Input.Players
@@ -38,7 +38,17 @@ namespace qASIC.Input.Players
                     player.RemoveDevice(device);
             };
 
-            _initialized = true;
+            Application.quitting += Application_quitting;
+        }
+
+        private static void Application_quitting()
+        {
+            for (int i = 0; i < Players.Count; i++)
+            {
+                RemovePlayer(Players[i]);
+            }
+
+            Players.Clear();
         }
 
         static void HandleDeviceConnected(IInputDevice device)

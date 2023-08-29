@@ -126,7 +126,7 @@ namespace qASIC.Input.Prompts.Internal
                     cellRect = cellRect
                         .ResizeWidthToCenter(cellRect.height);
 
-                        SelectedVariant.Prompts[item.key].sprite = (Sprite)EditorGUI.ObjectField(cellRect, SelectedVariant.Prompts[item.key].sprite, typeof(Sprite), false);
+                    SelectedVariant.Prompts[item.key].sprite = (Sprite)EditorGUI.ObjectField(cellRect, SelectedVariant.Prompts[item.key].sprite, typeof(Sprite), false);
                     break;
                 case 1:
                     GUI.Label(cellRect, item.key);

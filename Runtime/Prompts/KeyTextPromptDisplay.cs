@@ -2,6 +2,7 @@
 using UnityEngine;
 using qASIC.Input.Players;
 using qASIC.Input.Devices;
+using System.Linq;
 
 namespace qASIC.Input.Prompts
 {
@@ -20,25 +21,19 @@ namespace qASIC.Input.Prompts
 
         [Header("Text")]
         public TMPro.TMP_Text text;
-        public bool useTextFormat;
-        public string textFormat;
+        public string textFormat = "Press [{0}] to continue";
         public string notFoundText = "Unknown";
 
         private void OnValidate()
         {
-            
-        }
-
-        private void Awake()
-        {
-
+            UpdatePrompt();
         }
 
         private void OnEnable()
         {
             UpdatePrompt();
             InputPlayerManager.OnPlayerCreated += InputPlayerManager_OnPlayerCreated;
-            InputPlayerManager.OnPlayerRemoved += InputPlayerManager_OnPlayerRemoved;        
+            InputPlayerManager.OnPlayerRemoved += InputPlayerManager_OnPlayerRemoved;
         }
 
         private void OnDisable()
@@ -54,7 +49,7 @@ namespace qASIC.Input.Prompts
                 return;
 
             player.OnLastDeviceChanged -= Player_OnLastDeviceChanged;
-        }
+        } 
 
         private void InputPlayerManager_OnPlayerCreated(InputPlayer player)
         {
@@ -72,40 +67,45 @@ namespace qASIC.Input.Prompts
 
         void UpdatePrompt()
         {
-            Debug.Log(InputManager.Map);
             if (library == null)
                 return;
 
+            var promptText = notFoundText;
             var mapItem = item.GetItem();
 
-            if (mapItem == null)
-                return;
-
-            if (!(mapItem is ISupportsPrompts promptItem))
-                return;
-
-
-            var promptData = promptItem.GetPromptData();
-            var promptText = notFoundText;
-            var isPlayerConnected = InputPlayerManager.Players.IndexInRange(playerIndex) ||
-                InputPlayerManager.Players[playerIndex] == null;
-
-            if (promptData.promptGroups.Count > 1 && isPlayerConnected)
+            if (mapItem != null &&
+                mapItem is ISupportsPrompts promptItem)
             {
-                var index = Mathf.Clamp(promptIndex, 0, promptData.promptGroups.Count - 1);
+                var isPlayerConnected = InputPlayerManager.Players.IndexInRange(playerIndex) &&
+                    InputPlayerManager.Players[playerIndex] != null;
 
-                var keys = library
-                    .ForDevice(InputManager.Players[playerIndex].LastDevice ?? InputManager.Players[playerIndex].CurrentDevice)?
-                    .GetPromptsFromPaths(promptData.promptGroups[index].keyPaths)
-                    .ToDisplayNames();
+                if (isPlayerConnected)
+                {
+                    var device = InputManager.Players[playerIndex].LastDevice ?? InputManager.Players[playerIndex].CurrentDevice;
 
-                promptText = promptItem.KeysToPromptText(keys);
+                    var promptData = promptItem.GetPromptData();
+                    var promptGroups = promptData
+                        .promptGroups
+                        .Where(x => x.keyPaths.Count > 0)
+                        .Where(x => device.KeyRoots.Contains(x.keyPaths[0].Split('/').First()))
+                        .ToArray();
+
+                    if (promptGroups.Length > 0)
+                    {
+                        var index = Mathf.Clamp(promptIndex, 0, promptGroups.Length - 1);
+
+                        var keys = library
+                            .ForDevice(device)?
+                            .GetPromptsFromPaths(promptGroups[index].keyPaths)
+                            .ToDisplayNames();
+
+                        promptText = promptItem.KeysToPromptText(keys);
+                    }
+                }
             }
 
             if (text != null)
-                text.text = useTextFormat ?
-                    string.Format(textFormat, promptText) :
-                    promptText.ToString();
+                text.text = string.Format(textFormat, promptText);
         }
     }
 }

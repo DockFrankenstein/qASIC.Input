@@ -8,7 +8,7 @@ using System;
 
 namespace qASIC.Input.Prompts
 {
-    [System.Serializable]
+    [Serializable]
     public class PromptsVariant : ISerializationCallbackReceiver
     {
         public PromptsVariant()

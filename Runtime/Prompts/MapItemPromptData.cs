@@ -42,6 +42,14 @@ namespace qASIC.Input.Prompts
         public int requiredKeyPathCount = 0;
         public List<PromptGroup> promptGroups = new List<PromptGroup>();
 
+        public override string ToString()
+        {
+            var groups = promptGroups
+                .Select(x => string.Join(", ", x.keyPaths));
+
+            return string.Join("\n", groups);
+        }
+
         public class PromptGroup
         {
             public PromptGroup() { }

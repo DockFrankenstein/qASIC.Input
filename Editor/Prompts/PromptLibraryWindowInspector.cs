@@ -27,6 +27,7 @@ namespace qASIC.Input.Prompts.Internal
         Vector2 _scrollPosition;
 
         ReorderableList l_variantKeyTypes;
+        ReorderableList l_variantDeviceTypes;
 
         private object[] _selectedObjects = new object[0];
         public object[] SelectedObjects
@@ -79,15 +80,6 @@ namespace qASIC.Input.Prompts.Internal
                 GUI.Label(rect, "Key Types");
             };
 
-            l_variantKeyTypes.onChangedCallback += _ =>
-            {
-                foreach (var item in SelectedObjects)
-                {
-                    if (!(item is PromptsVariant variant)) continue;
-                    variant.keyTypes = ((List<string>)l_variantKeyTypes.list).ToArray();
-                }
-            };
-
             l_variantKeyTypes.onAddCallback += _ =>
             {
                 l_variantKeyTypes.list.Add(string.Empty);
@@ -95,13 +87,48 @@ namespace qASIC.Input.Prompts.Internal
 
             l_variantKeyTypes.drawElementCallback += (Rect rect, int index, bool isActive, bool isFocused) =>
             {
-                using (new EditorGUI.ChangeCheckScope())
+                using (var changed = new EditorGUI.ChangeCheckScope())
+                {
                     l_variantKeyTypes.list[index] = EditorGUI.DelayedTextField(rect, l_variantKeyTypes.list[index] as string);
 
-                foreach (var item in SelectedObjects)
+                    if (changed.changed)
+                    {
+                        foreach (var item in SelectedObjects)
+                        {
+                            if (!(item is PromptsVariant variant)) continue;
+                            variant.keyTypes = ((List<string>)l_variantKeyTypes.list).ToArray();
+                            variant.EnsureKeyTypes();
+                            window.promptTree.Reload();
+                        }
+                    }
+                }
+            };
+
+            l_variantDeviceTypes = new ReorderableList(new List<string>(), typeof(string));
+            l_variantDeviceTypes.drawHeaderCallback += (Rect rect) =>
+            {
+                GUI.Label(rect, "Device Types");
+            };
+
+            l_variantDeviceTypes.onAddCallback += _ =>
+            {
+                l_variantDeviceTypes.list.Add(string.Empty);
+            };
+
+            l_variantDeviceTypes.drawElementCallback += (Rect rect, int index, bool isActive, bool isFocused) =>
+            {
+                using (var changed = new EditorGUI.ChangeCheckScope())
                 {
-                    if (!(item is PromptsVariant variant)) continue;
-                    variant.keyTypes = ((List<string>)l_variantKeyTypes.list).ToArray();
+                    l_variantDeviceTypes.list[index] = EditorGUI.DelayedTextField(rect, l_variantDeviceTypes.list[index] as string);
+
+                    if (changed.changed)
+                    {
+                        foreach (var item in SelectedObjects)
+                        {
+                            if (!(item is PromptsVariant variant)) continue;
+                            variant.deviceTypes = ((List<string>)l_variantDeviceTypes.list).ToArray();
+                        }
+                    }
                 }
             };
 
@@ -111,12 +138,14 @@ namespace qASIC.Input.Prompts.Internal
         void HandleSelectionChange()
         {
             l_variantKeyTypes.list.Clear();
+            l_variantDeviceTypes.list.Clear();
 
             if (_mixedSelected || _noneSelected) return;
             switch (SelectedObjects.First())
             {
                 case PromptsVariant variant:
                     l_variantKeyTypes.list = new List<string>(variant.keyTypes);
+                    l_variantDeviceTypes.list = new List<string>(variant.deviceTypes);
                     break;
             }
         }
@@ -152,6 +181,7 @@ namespace qASIC.Input.Prompts.Internal
                         case PromptsVariant variant:
                             variant.name = MultipleSelectedTextField("Name", variant.name);
                             l_variantKeyTypes.DoLayoutList();
+                            l_variantDeviceTypes.DoLayoutList();
                             break;
                     }
 

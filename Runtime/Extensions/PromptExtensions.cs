@@ -12,12 +12,12 @@ namespace qASIC.Input.Prompts
     {
         public static string[] ToDisplayNames(this Prompt[] prompts) =>
             prompts
-            .Select(x => x.displayName)
+            .Select(x => x?.displayName)
             .ToArray();
 
         public static Sprite[] ToSprites(this Prompt[] prompts) =>
             prompts
-            .Select(x => x.sprite)
+            .Select(x => x?.sprite)
             .ToArray();
     }
 }
